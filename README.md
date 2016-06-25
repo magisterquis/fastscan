@@ -38,7 +38,7 @@ while :; do ./fastscan -n 500 192.168.1.1; done # Please don't...
 
 No Route to Host
 ----------------
-There's an error when the scan is going to fast which comes back as "no route
+There's an error when the scan is going too fast which comes back as "no route
 to host," even though there's a perfectly good route.  Use the -r flag to retry
 the ports that would have been missed.  In practice, it's still pretty fast.
 
