@@ -10,6 +10,8 @@ set -e
 
 PROG=$(basename $(pwd))
 
+go vet
+
 for GOOS in windows linux openbsd darwin; do
         for GOARCH in 386 amd64; do
                 export GOOS GOARCH
