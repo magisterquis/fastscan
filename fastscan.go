@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -27,8 +28,11 @@ const (
 	PROGINTERVAL = time.Second * 15 /* Report progress every this often */
 )
 
-var slogger *log.Logger
-var start = time.Now()
+var (
+	slogger *log.Logger
+	start   = time.Now()
+	nSuc    uint64
+)
 
 func init() {
 	slogger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
@@ -139,13 +143,15 @@ Options:
 				etc = n.Add(rem).Format("15:04:05")
 			}
 			log.Printf(
-				"INFO: Working on port %v/%v "+
+				"INFO Working on port %v/%v "+
 					"(%0.2f ports/min, "+
+					"%v open, "+
 					"%4v remaining, "+
 					"est. completion: %v)",
 				i+1,
 				len(ports),
 				ppm,
+				nSuc,
 				est,
 				etc,
 			)
@@ -154,16 +160,18 @@ Options:
 		}
 	}
 	close(ch)
-	log.Printf("INFO: Waiting for the attackers to finish")
+	log.Printf("INFO Waiting for the attackers to finish")
 
 	/* Wait for attackers to finish */
 	wg.Wait()
 	d := time.Now().Sub(start)
 	log.Printf(
-		"INFO: Scanned %v ports in %v (%0.2f ports per minute)",
+		"INFO Scanned %v ports in %v (%0.2f ports per minute), "+
+			"found %v open",
 		len(ports),
 		d,
 		float64(len(ports))/d.Minutes(),
+		nSuc,
 	)
 
 	log.Printf("Done.")
@@ -219,7 +227,7 @@ func attacker(
 			st := time.Duration(bst.Uint64()) * time.Nanosecond
 			/* Seems unnecessarily noisy
 			log.Printf(
-				"INFO: Will retry port %v in %v due to "+
+				"INFO Will retry port %v in %v due to "+
 					"\"connect: no route to host\" error",
 				port,
 				st,
@@ -237,7 +245,7 @@ func attacker(
 			) ||
 				strings.HasSuffix(
 					emsg,
-					"getsockopt: connection refused",
+					": connection refused",
 				)) {
 			if fails {
 				log.Printf("FAIL %v %v", t, err)
@@ -340,5 +348,6 @@ func portList(rs string) ([]string, error) {
 
 /* slog logs success */
 func slog(t string, buf []byte) {
+	atomic.AddUint64(&nSuc, 1)
 	slogger.Printf("SUCCESS %v %q", t, buf)
 }
