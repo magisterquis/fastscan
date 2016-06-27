@@ -235,7 +235,6 @@ func attacker(
 			*/
 			time.Sleep(st)
 			goto try /* Neener neener */
-			continue
 		}
 		/* Log other errors if asked */
 		if nil != err &&
