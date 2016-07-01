@@ -120,6 +120,9 @@ Options:
 		)
 	}
 
+	/* Tell the user we're starting */
+	log.Printf("INFO Scanning %v ports on %v", len(ports), flag.Arg(0))
+
 	/* Send ports to attack */
 	lastt := time.Now()
 	lasti := 0
